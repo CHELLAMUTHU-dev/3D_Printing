@@ -5,8 +5,8 @@ const LandingPage = () => {
   const [videoError, setVideoError] = useState(false);
 
   return (
-    <div className="flex flex-col lg:flex-row bg-black text-white max-h-[600px] w-auto mt-20 overflow-hidden">
-      <div className="lg:w-2/5 xl:w-2/5 p-8 lg:p-12 xl:p-20 flex flex-col justify-center flex-1">
+    <div className="flex flex-col lg:flex-row bg-black text-white max-h-[600px] w-auto mt-10 sm:mt-20 overflow-hidden">
+      <div className="lg:w-2/5 xl:w-2/5 p-8 lg:p-12 xl:p-20 flex flex-col justify-center flex-1 mt-6 sm:mt-0">
         <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight">
           Industrial 3D Printing
         </h1>

@@ -1,10 +1,28 @@
 "use client";
+
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const Navbar = () => {
+  // Desktop dropdown (hover)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-  const dropdownRefs = useRef<(HTMLLIElement | null)[]>([]);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Mobile dropdown (click)
+  const [mobileOpenId, setMobileOpenId] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Timeout ref (Next.js safe)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const router = useRouter();
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const dropdowns = [
     {
@@ -45,18 +63,19 @@ const Navbar = () => {
         "SAF™ Technology",
         "Stereolithography Technology",
         "3DFashion™ Technology",
-        "3d Printing FAQ",
+        "3D Printing FAQ",
       ],
       item2: ["Connectivity", "openAM™ Software", "Digital Anatomy™ Creator"],
     },
     {
       id: "dropdown-3",
       label: "Materials",
+      heading1: "Materials",
       item1: [
         "FDM",
         "PolyJet™",
         "Stereolithography",
-        "SAF™/Powder Bed Fusion",
+        "SAF™ / Powder Bed Fusion",
         "P3™ DLP Technology",
       ],
     },
@@ -83,141 +102,183 @@ const Navbar = () => {
     },
   ];
 
-  // Close dropdown when mouse leaves
-  useEffect(() => {
-    const handleMouseLeave = (event: MouseEvent) => {
-      if (openDropdownId) {
-        // Check if mouse left all dropdown elements
-        const isLeavingAll = dropdownRefs.current.every(
-          (ref) => ref && !ref.contains(event.relatedTarget as Node)
-        );
-        
-        if (isLeavingAll) {
-          setOpenDropdownId(null);
-        }
-      }
-    };
-
-    if (openDropdownId) {
-      document.addEventListener("mouseleave", handleMouseLeave);
-    }
-
-    return () => {
-      document.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, [openDropdownId]);
-
-  // Clear timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
-    <nav>
-      <ul className="flex space-x-4 p-4">
-        {dropdowns.map((dropdown, index) => {
-          const isOpen = openDropdownId === dropdown.id;
+    <div className="flex  sm:flex-row justify-between items-center sm:items-center w-full">
+      {/* ================= DESKTOP NAV ================= */}
+      <nav className="relative hidden sm:block">
+        <ul className="flex space-x-4 p-4 ">
+          {dropdowns.map((dropdown) => {
+            const isOpen = openDropdownId === dropdown.id;
 
-          return (
-            <li
-              key={dropdown.id}
-              ref={(el) => {
-                dropdownRefs.current[index] = el;
-              }}
-              className="relative "
-              onMouseEnter={() => {
-                // Clear any pending close timeout
-                if (timeoutRef.current) {
-                  clearTimeout(timeoutRef.current);
-                }
-                setOpenDropdownId(dropdown.id);
-              }}
-              onMouseLeave={() => {
-                // Add slight delay before closing to allow moving to dropdown
-                timeoutRef.current = setTimeout(() => {
-                  setOpenDropdownId(null);
-                }, 300);
-              }}
-            >
-              <button
-                className={`px-4 py-2 rounded-lg transition-colors cursor-pointer ${
-                  isOpen
-                    ? "bg-blue-100 text-blue-700 border border-blue-300"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+            return (
+              <li
+                key={dropdown.id}
+                className="relative"
+                onMouseEnter={() => {
+                  if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                  setOpenDropdownId(dropdown.id);
+                }}
+                onMouseLeave={() => {
+                  if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                  timeoutRef.current = setTimeout(() => {
+                    setOpenDropdownId(null);
+                  }, 250);
+                }}
               >
-                {dropdown.label}
-                <span className="ml-2 w-5 h-5 ">{isOpen ? "▲" : "▼"}</span>
-              </button>
-
-              {isOpen && (
-                <div 
-                  className="flex flex-row absolute top-12 -left-20 mt-1 bg-white rounded-lg shadow-lg border py-1 z-50 min-w-[400px]"
-                  onMouseEnter={() => {
-                    // Clear close timeout when entering dropdown
-                    if (timeoutRef.current) {
-                      clearTimeout(timeoutRef.current);
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    // Close dropdown when leaving it
-                    timeoutRef.current = setTimeout(() => {
-                      setOpenDropdownId(null);
-                    }, 300);
-                  }}
+                <button
+                  className={`cursor-pointer px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                    isOpen
+                      ? "bg-blue-100 text-blue-700 border border-blue-300"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
                 >
-                  {/* First column */}
-                  <div className="px-4 py-2 min-w-[200px] border-r border-gray-200 ">
-                    {dropdown.heading1 && (
-                      <h3 className="font-semibold text-gray-900 mb-2" >
-                        {dropdown.heading1}
-                      </h3>
-                    )}
-                    {dropdown.item1.map((item, itemIndex) => (
-                      <button
-                        key={itemIndex}
-                        className=" block w-full text-left cursor-pointer px-2 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600 rounded transition-colors"
-                        onClick={() => {
-                          console.log(`Selected: ${item}`);
-                          setOpenDropdownId(null);
-                        }}
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-                  
-                  {/* Second column (if exists) */}
-                  {dropdown.heading2 && dropdown.item2 && (
-                    <div className="px-4 py-2 min-w-[200px] border-l border-gray-200">
-                      <h3 className="font-semibold text-gray-900 mb-2">
-                        {dropdown.heading2}
-                      </h3>
-                      {dropdown.item2.map((item, itemIndex) => (
+                  {dropdown.label}
+                  <span>{isOpen ? <Image src="/up-arrow.png" alt="Up Arrow" width={12} height={12} /> : <Image src="/down-arrow.png" alt="Down Arrow" width={12} height={12} />}</span>
+                </button>
+
+                {isOpen && (
+                  <div
+                    className={`absolute top-12 ${dropdown.heading2 && dropdown.item2 ? "-left-30" : "-left-10"} mt-1 flex bg-white rounded-lg shadow-lg border border-gray-200 z-50
+      ${dropdown.heading2 && dropdown.item2 ? "min-w-[420px]" : "min-w-[210px]"}
+    `}
+                    onMouseEnter={() => {
+                      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                    }}
+                    onMouseLeave={() => {
+                      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                      timeoutRef.current = setTimeout(() => {
+                        setOpenDropdownId(null);
+                      }, 250);
+                    }}
+                  >
+                    {/* Column 1 */}
+                    <div
+                      className={`px-4 py-3 min-w-[210px]
+        ${dropdown.heading2 && dropdown.item2 ? "border-r border-gray-200" : ""}
+      `}
+                    >
+                      {dropdown.heading1 && (
+                        <h3 className="font-semibold mb-2">
+                          {dropdown.heading1}
+                        </h3>
+                      )}
+                      {dropdown.item1.map((item) => (
                         <button
-                          key={itemIndex}
-                          className="block w-full text-left px-2 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600 rounded transition-colors"
-                          onClick={() => {
-                            console.log(`Selected: ${item}`);
-                            setOpenDropdownId(null);
-                          }}
+                          key={item}
+                          className="block w-full text-left px-2 py-2 rounded hover:bg-gray-50 hover:text-blue-600"
+                          onClick={() => setOpenDropdownId(null)}
                         >
                           {item}
                         </button>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+
+                    {/* Column 2 (only if exists) */}
+                    {dropdown.heading2 && dropdown.item2 && (
+                      <div className="px-4 py-3 min-w-[210px]">
+                        <h3 className="font-semibold mb-2">
+                          {dropdown.heading2}
+                        </h3>
+                        {dropdown.item2.map((item) => (
+                          <button
+                            key={item}
+                            className="block w-full text-left px-2 py-2 rounded hover:bg-gray-50 hover:text-blue-600"
+                            onClick={() => setOpenDropdownId(null)}
+                          >
+                            {item}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* ================= MOBILE NAV ================= */}
+      <button className="block sm:hidden ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer" onClick={() => router.push("/orders")}>
+          Buy
+        </button>
+      <nav className="sm:hidden relative p-4">
+        <button
+          className="p-2 bg-gray-100 rounded-lg cursor-pointer"
+          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+        >
+          <Image
+            src={isMobileMenuOpen ? "/close.png" : "/hamburger-menu.png"}
+            alt="Menu"
+            width={20}
+            height={20}
+          />
+        </button>
+
+        {isMobileMenuOpen && (
+          <ul className="absolute top-16 -left-40 w-72 bg-white rounded-lg shadow-lg z-50
+           max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain scroll-smooth"
+>
+            {dropdowns.map((dropdown) => (
+              <li key={dropdown.id} >
+                <button
+                  className="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200"
+                  onClick={() =>
+                    setMobileOpenId((prev) =>
+                      prev === dropdown.id ? null : dropdown.id,
+                    )
+                  }
+                >
+                  {dropdown.label}
+                </button>
+
+                {mobileOpenId === dropdown.id && (
+                  <div className="px-2 py-2 bg-gray-50   ">
+                    {dropdown.heading1 && (
+                      <h3 className="font-semibold px-2 mt-2">
+                        {dropdown.heading1}
+                      </h3>
+                    )}
+                    {dropdown.item1.map((item) => (
+                      <button
+                        key={item}
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:text-blue-600"
+                        onClick={() => {
+                          setMobileOpenId(null);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        {item}
+                      </button>
+                    ))}
+
+                    {dropdown.heading2 && dropdown.item2 && (
+                      <>
+                        <h3 className="font-semibold px-2 mt-4">
+                          {dropdown.heading2}
+                        </h3>
+                        {dropdown.item2.map((item) => (
+                          <button
+                            key={item}
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:text-blue-600"
+                            onClick={() => {
+                              setMobileOpenId(null);
+                              setIsMobileMenuOpen(false);
+                            }}
+                          >
+                            {item}
+                          </button>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </nav>
+    </div>
   );
 };
 
